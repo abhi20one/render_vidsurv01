@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO Object Detection</title>
+    <style>
+        body {
+            background-color: #333; /* Dark grey background */
+            color: white; /* White text color for contrast */
+            font-family: Arial, sans-serif;
+            display: flex;
+        }
+
+        h1 {
+            color: white;
+        }
+
+        button {
+            background-color: #444; /* Slightly lighter grey for buttons */
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #555; /* Lighter grey when hovered */
+        }
+
+        select, input {
+            background-color: #444;
+            color: white;
+            border: 1px solid #555;
+            padding: 5px;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #888;
+        }
+    </style>
+    <script>
+
+
+
+        function fetchMatchedFaces() {
+            fetch('/matched_faces')
+                .then(response => response.json())
+                .then(data => {
+                    const facesContainer = document.getElementById("matched-faces");
+                    facesContainer.innerHTML = ""; // Clear old data
+
+                    data.forEach(face => {
+                        const faceCard = document.createElement("div");
+                        faceCard.classList.add("face-card");
+
+                        const img = document.createElement("img");
+                        img.src = face.img_url;
+                        img.alt = face.name;
+
+                        const nameTag = document.createElement("p");
+                        nameTag.textContent = face.name;
+
+                        faceCard.appendChild(img);
+                        faceCard.appendChild(nameTag);
+                        facesContainer.appendChild(faceCard);
+                    });
+                })
+                .catch(error => console.error("Error fetching matched faces:", error));
+        }
+
+
+
+        setInterval(fetchMatchedFaces, 2000); // Update matched faces every 5 seconds
+
+        
+        function togglePause() {
+            fetch("/toggle_pause", { method: "POST" })
+                .then(response => response.json())
+                .then(data => {
+                    const btn = document.getElementById("pauseButton");
+                    btn.textContent = data.paused ? "Resume" : "Pause";
+                });
+        }
+
+        function toggleFullscreen() {
+            const videoElement = document.getElementById("videoFeed");
+            if (!document.fullscreenElement) {
+                videoElement.requestFullscreen().catch(err => {
+                    console.log("Error attempting to enable full-screen mode:", err);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Listen for the spacebar key to toggle pause/play
+        window.addEventListener("keydown", function(event) {
+            if (event.code === "Space") {
+                event.preventDefault(); // Prevent page scroll behavior when pressing space
+                togglePause();
+            }
+            if (event.code === "KeyF") {
+                event.preventDefault(); // Prevent default browser fullscreen
+                toggleFullscreen();
+            }
+        });
+
+        // Click on video to pause/play
+        document.addEventListener('DOMContentLoaded', function() {
+            const videoFeed = document.getElementById("videoFeed");
+            videoFeed.addEventListener("click", togglePause); // Toggle pause when clicking on the video
+        });
+    </script>
+</head>
+<body>
+
+    <div class="left_side">
+    <h3>HUMAN DETECTION AND FACE RECOGNITION</h3>     
+    <form action="/" method="get">
+        <label for="model">Choose a YOLO model:</label>
+        <select name="model" id="model" required>
+            <option value="" selected>None</option>
+            {% for model in model_files %}
+                <option value="{{ model }}" {% if request.args.get('model') == model %}selected{% endif %}>{{ model }}</option>
+            {% endfor %}
+        </select>
+        <label for="source">Choose a video source:</label>
+        <select name="source" id="source" required>
+            <option value="" selected>None</option>
+            <option value="Webcam" {% if request.args.get('source') == 'Webcam' %}selected{% endif %}>Webcam</option>
+            {% for video_file in video_files %}
+                <option value="{{ video_file }}" {% if request.args.get('source') == video_file %}selected{% endif %}>{{ video_file }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Start Detection">
+    </form>
+    {% if request.args.get('model') and request.args.get('source') %}
+        <p><strong>Selected Model:</strong> {{ request.args.get('model') }}</p>
+        <p><strong>Selected Video Source:</strong> {{ request.args.get('source') }}</p>
+        <button id="pauseButton" onclick="togglePause()">Pause</button>
+        <button id="fullscreenButton" onclick="toggleFullscreen()">Fullscreen</button>
+        <br>
+        <img id="videoFeed" src="{{ url_for('video_feed', source=request.args.get('source'), model=request.args.get('model')) }}" 
+             width="900px" max-width="1280px" style="max-width: 100%; height: auto;">
+    {% endif %}
+    </div>
+
+
+    <div class="right_side">
+    <h2>All matches found</h2>
+    <div id="matched-faces"></div>
+    </div>
+
+</body>
+</html>
