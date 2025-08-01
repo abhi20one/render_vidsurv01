@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO Object Detection</title>
+    <script>
+        function togglePause() {
+            fetch("/toggle_pause", { method: "POST" })
+                .then(response => response.json())
+                .then(data => {
+                    const btn = document.getElementById("pauseButton");
+                    btn.textContent = data.paused ? "Resume" : "Pause";
+                });
+        }
+    </script>
+</head>
+<body>
+    <h1>YOLO Object Detection</h1>
+
+    <form action="/" method="get">
+        <label for="model">Choose a YOLO model:</label>
+        <select name="model" id="model" required>
+            <option value="" selected>None</option>
+            {% for model in model_files %}
+                <option value="{{ model }}" {% if request.args.get('model') == model %}selected{% endif %}>{{ model }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="source">Choose a video source:</label>
+        <select name="source" id="source" required>
+            <option value="" selected>None</option>
+            <option value="Webcam" {% if request.args.get('source') == 'Webcam' %}selected{% endif %}>Webcam</option>
+            {% for video_file in video_files %}
+                <option value="{{ video_file }}" {% if request.args.get('source') == video_file %}selected{% endif %}>{{ video_file }}</option>
+            {% endfor %}
+        </select>
+        
+        <input type="submit" value="Start Detection">
+    </form>
+
+
+    {% if request.args.get('model') and request.args.get('source') %}
+        <p><strong>Selected Model:</strong> {{ request.args.get('model') }}</p>
+        <p><strong>Selected Video Source:</strong> {{ request.args.get('source') }}</p>
+
+        <button id="pauseButton" onclick="togglePause()">Pause</button>
+        <br>
+        <img id="videoFeed" src="{{ url_for('video_feed', source=request.args.get('source'), model=request.args.get('model')) }}" 
+             width="800px" max-width="1280px" style="max-width: 100%; height: auto;">
+        
+        
+    {% endif %}
+
+</body>
+</html>
