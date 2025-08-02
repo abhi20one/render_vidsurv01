@@ -1,4 +1,5 @@
-ultralytics==8.2.12
-flask==2.3.3
-opencv-python==4.8.0.76
-numpy==1.24.4
+Flask==2.3.3
+ultralytics==8.1.25
+opencv-python-headless==4.8.1.78
+gunicorn==21.2.0
+numpy==1.26.4
