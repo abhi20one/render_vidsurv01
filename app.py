@@ -51,7 +51,7 @@ def generate_frames(video_source, model_path):
             print('Reached the end of the video file. Exiting program.')
             break
 
-        results = model(frame, verbose=False, device='cpu')
+        results = model(frame, verbose=False)
         detections = results[0].boxes
         object_count = 0
 
